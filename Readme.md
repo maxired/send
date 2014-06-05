@@ -64,10 +64,6 @@ Serve files relative to `path`.
   - `stream` file streaming has started `(stream)`
   - `end` streaming has completed
 
-### .etag(bool)
-
-  Enable or disable etag generation, defaults to true.
-
 ### .root(dir)
 
   Serve files relative to `path`. Aliased as `.from(dir)`.

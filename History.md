@@ -2,6 +2,7 @@ unreleased
 ==========
 
  * Accept file system paths in `path` instead of URL-encoded paths
+ * Remove `send.etag()`; use `etag` in `options`
 
 0.5.0 / 2014-06-28
 ==================
