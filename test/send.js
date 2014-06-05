@@ -690,17 +690,6 @@ describe('send(file, options)', function(){
   })
 
   describe('root', function(){
-    it('should set with deprecated from', function(done){
-      var app = http.createServer(function(req, res){
-        send(req, req.url, {from: __dirname + '/fixtures'})
-        .pipe(res)
-      });
-
-      request(app)
-      .get('/pets/../name.txt')
-      .expect(200, 'tobi', done)
-    })
-
     describe('when given', function(){
       it('should join root', function(done){
         var app = http.createServer(function(req, res){
