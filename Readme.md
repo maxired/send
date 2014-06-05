@@ -64,12 +64,6 @@ Serve files relative to `path`.
   - `stream` file streaming has started `(stream)`
   - `end` streaming has completed
 
-### .index(paths)
-
-  By default send supports "index.html" files, to disable this
-  invoke `.index(false)` or to supply a new index pass a string
-  or an array in preferred order.
-
 ## Error-handling
 
   By default when no `error` listeners are present an automatic response will be made, otherwise you have full control over the response, aka you may show a 5xx page etc.
