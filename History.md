@@ -1,3 +1,8 @@
+unreleased
+==========
+
+ * Accept file system paths in `path` instead of URL-encoded paths
+
 0.5.0 / 2014-06-28
 ==================
 

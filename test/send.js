@@ -23,7 +23,9 @@ var app = http.createServer(function(req, res){
     res.end('Redirecting to ' + req.url + '/');
   }
 
-  send(req, req.url, {root: fixtures})
+  var path = decodeURIComponent(req.url)
+
+  send(req, path, {root: fixtures})
   .on('error', error)
   .on('directory', redirect)
   .pipe(res);
@@ -53,12 +55,6 @@ describe('send(file).pipe(res)', function(){
     request(app)
     .get('/do..ts.txt')
     .expect(200, '...', done)
-  })
-
-  it('should treat a malformed URI as a bad request', function(done){
-    request(app)
-    .get('/some%99thing.txt')
-    .expect(400, 'Bad Request', done)
   })
 
   it('should 400 on NULL bytes', function(done){
