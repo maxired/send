@@ -45,7 +45,7 @@ By default send supports "index.html" files, to disable this
 set `false` or to supply a new index pass a string or an array
 in preferred order.
 
-#### options.maxage
+#### options.maxAge
 
 Provide a max-age in milliseconds for http caching, defaults to 0.
 This can also be a string accepted by the
@@ -69,12 +69,6 @@ Serve files relative to `path`.
   By default send supports "index.html" files, to disable this
   invoke `.index(false)` or to supply a new index pass a string
   or an array in preferred order.
-
-### .maxage(ms)
-
-  Provide a max-age in milliseconds for http caching, defaults to 0.
-  This can also be a string accepted by the
-  [ms](https://www.npmjs.org/package/ms#readme) module.
 
 ## Error-handling
 
