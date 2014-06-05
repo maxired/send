@@ -64,10 +64,6 @@ Serve files relative to `path`.
   - `stream` file streaming has started `(stream)`
   - `end` streaming has completed
 
-### .root(dir)
-
-  Serve files relative to `path`. Aliased as `.from(dir)`.
-
 ### .index(paths)
 
   By default send supports "index.html" files, to disable this
