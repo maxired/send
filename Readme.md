@@ -1,4 +1,4 @@
-# send
+# send-inzi
 
 [![NPM Version][npm-image]][npm-url]
 [![NPM Downloads][downloads-image]][downloads-url]
@@ -6,8 +6,8 @@
 [![Test Coverage][coveralls-image]][coveralls-url]
 [![Gittip][gittip-image]][gittip-url]
 
-  Send is Connect's `static()` extracted for generalized use, a streaming static file
-  server supporting partial responses (Ranges), conditional-GET negotiation, high test coverage, and granular events which may be leveraged to take appropriate actions in your application or framework.
+  Send-inzip is a fork of connect, allwogin to serve file included inside a '.zip'.
+  this has beed developpe to serve resources fraom APK files, but stating from connect, we hope that it could be of a more general use
 
 ## Installation
 
@@ -18,35 +18,16 @@ $ npm install send
 ## API
 
 ```js
-var send = require('send')
+var sendinzip = require('send-inziê')
 ```
 
-### send(req, path, [options])
+### sendinzi(req, path, [options])
 
 Create a new `SendStream` for the given path to send to a `res`. The `req` is
 the Node.js HTTP request and the `path` is a urlencoded path to send (urlencoded,
 not the actual file-system path).
 
 #### Options
-
-##### dotfiles
-
-  Set how "dotfiles" are treated when encountered. A dotfile is a file
-  or directory that begins with a dot ("."). Note this check is done on
-  the path itself without checking if the path actually exists on the
-  disk. If `root` is specified, only the dotfiles above the root are
-  checked (i.e. the root itself can be within a dotfile when when set
-  to "deny").
-
-  The default value is `'ignore'`.
-
-  - `'allow'` No special treatment for dotfiles.
-  - `'deny'` Send a 403 for any request for a dotfile.
-  - `'ignore'` Pretend like the dotfile does not exist and 404.
-
-##### etag
-
-  Enable or disable etag generation, defaults to true.
 
 ##### extensions
 
@@ -61,20 +42,9 @@ not the actual file-system path).
   set `false` or to supply a new index pass a string or an array
   in preferred order.
 
-##### lastModified
-
-  Enable or disable `Last-Modified` header, defaults to true. Uses the file
-  system's last modified value.
-
-##### maxAge
-
-  Provide a max-age in milliseconds for http caching, defaults to 0.
-  This can also be a string accepted by the
-  [ms](https://www.npmjs.org/package/ms#readme) module.
-
 ##### root
 
-  Serve files relative to `path`.
+  Serve files relative to `path`. This should be a folder, not a zip file.
 
 ### Events
 
@@ -95,11 +65,6 @@ object, typically `send(req, path, options).pipe(res)`.
 ## Error-handling
 
   By default when no `error` listeners are present an automatic response will be made, otherwise you have full control over the response, aka you may show a 5xx page etc.
-
-## Caching
-
-  It does _not_ perform internal caching, you should use a reverse proxy cache such
-  as Varnish for this, or those fancy things called CDNs. If your application is small enough that it would benefit from single-node memory caching, it's small enough that it does not need caching at all ;).
 
 ## Debugging
 
