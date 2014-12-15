@@ -1,4 +1,4 @@
-
+7
 /**
  * Module dependencies.
  */
@@ -6,16 +6,17 @@
 var debug = require('debug')('send')
 var deprecate = require('depd')('send')
 var destroy = require('destroy')
-var escapeHtml = require('escape-html')
-  , parseRange = require('range-parser')
-  , Stream = require('stream')
-  , mime = require('mime')
-  , fresh = require('fresh')
-  , path = require('path')
-  , http = require('http')
-  , fs = require('fs')
-  , normalize = path.normalize
-  , join = path.join
+var escapeHtml = require('escape-html'),
+  Stream = require('stream'),
+  mime = require('mime'),
+  fresh = require('fresh'),
+  path = require('path'),
+  http = require('http'),
+  fs = require('fs'),
+  normalize = path.normalize,
+  basename = path.basename,
+  dirname = path.dirname,
+  join = path.join
 var etag = require('etag')
 var EventEmitter = require('events').EventEmitter;
 var ms = require('ms');
@@ -48,8 +49,9 @@ exports.mime = mime;
  */
 
 /* istanbul ignore next */
-var listenerCount = EventEmitter.listenerCount
-  || function(emitter, type){ return emitter.listeners(type).length; };
+var listenerCount = EventEmitter.listenerCount || function(emitter, type) {
+  return emitter.listeners(type).length;
+};
 
 /**
  * Return a `SendStream` for `req` and `path`.
@@ -75,19 +77,16 @@ function send(req, path, options) {
  */
 
 function SendStream(req, path, options) {
+
   var self = this;
   options = options || {};
   this.req = req;
   this.path = path;
   this.options = options;
 
-  this._etag = options.etag !== undefined
-    ? Boolean(options.etag)
-    : true
+  this._etag = options.etag !== undefined ? Boolean(options.etag) : true
 
-  this._dotfiles = options.dotfiles !== undefined
-    ? options.dotfiles
-    : 'ignore'
+  this._dotfiles = options.dotfiles !== undefined ? options.dotfiles : 'ignore'
 
   if (['allow', 'deny', 'ignore'].indexOf(this._dotfiles) === -1) {
     throw new TypeError('dotfiles option must be "allow", "deny", or "ignore"')
@@ -104,29 +103,17 @@ function SendStream(req, path, options) {
     this._dotfiles = undefined
   }
 
-  this._extensions = options.extensions !== undefined
-    ? normalizeList(options.extensions)
-    : []
+  this._extensions = options.extensions !== undefined ? normalizeList(options.extensions) : []
 
-  this._index = options.index !== undefined
-    ? normalizeList(options.index)
-    : ['index.html']
+  this._index = options.index !== undefined ? normalizeList(options.index) : ['index.html']
 
-  this._lastModified = options.lastModified !== undefined
-    ? Boolean(options.lastModified)
-    : true
+  this._lastModified = options.lastModified !== undefined ? Boolean(options.lastModified) : true
 
   this._maxage = options.maxAge || options.maxage
-  this._maxage = typeof this._maxage === 'string'
-    ? ms(this._maxage)
-    : Number(this._maxage)
-  this._maxage = !isNaN(this._maxage)
-    ? Math.min(Math.max(0, this._maxage), maxMaxAge)
-    : 0
+  this._maxage = typeof this._maxage === 'string' ? ms(this._maxage) : Number(this._maxage)
+  this._maxage = !isNaN(this._maxage) ? Math.min(Math.max(0, this._maxage), maxMaxAge) : 0
 
-  this._root = options.root
-    ? resolve(options.root)
-    : null
+  this._root = options.root ? resolve(options.root) : null
 
   if (!this._root && options.from) {
     this.from(options.from);
@@ -194,7 +181,7 @@ SendStream.prototype.index = deprecate.function(function index(paths) {
  * @api public
  */
 
-SendStream.prototype.root = function(path){
+SendStream.prototype.root = function(path) {
   path = String(path);
   this._root = resolve(path)
   return this;
@@ -215,9 +202,7 @@ SendStream.prototype.root = deprecate.function(SendStream.prototype.root,
  */
 
 SendStream.prototype.maxage = deprecate.function(function maxage(maxAge) {
-  maxAge = typeof maxAge === 'string'
-    ? ms(maxAge)
-    : Number(maxAge);
+  maxAge = typeof maxAge === 'string' ? ms(maxAge) : Number(maxAge);
   if (isNaN(maxAge)) maxAge = 0;
   if (Infinity == maxAge) maxAge = 60 * 60 * 24 * 365 * 1000;
   debug('max-age %d', maxAge);
@@ -232,7 +217,7 @@ SendStream.prototype.maxage = deprecate.function(function maxage(maxAge) {
  * @api private
  */
 
-SendStream.prototype.error = function(status, err){
+SendStream.prototype.error = function(status, err) {
   var res = this.res;
   var msg = http.STATUS_CODES[status];
 
@@ -258,7 +243,7 @@ SendStream.prototype.error = function(status, err){
  * @api private
  */
 
-SendStream.prototype.hasTrailingSlash = function(){
+SendStream.prototype.hasTrailingSlash = function() {
   return '/' == this.path[this.path.length - 1];
 };
 
@@ -269,9 +254,8 @@ SendStream.prototype.hasTrailingSlash = function(){
  * @api private
  */
 
-SendStream.prototype.isConditionalGET = function(){
-  return this.req.headers['if-none-match']
-    || this.req.headers['if-modified-since'];
+SendStream.prototype.isConditionalGET = function() {
+  return this.req.headers['if-none-match'] || this.req.headers['if-modified-since'];
 };
 
 /**
@@ -280,9 +264,9 @@ SendStream.prototype.isConditionalGET = function(){
  * @api private
  */
 
-SendStream.prototype.removeContentHeaderFields = function(){
+SendStream.prototype.removeContentHeaderFields = function() {
   var res = this.res;
-  Object.keys(res._headers).forEach(function(field){
+  Object.keys(res._headers).forEach(function(field) {
     if (0 == field.indexOf('content')) {
       res.removeHeader(field);
     }
@@ -295,7 +279,7 @@ SendStream.prototype.removeContentHeaderFields = function(){
  * @api private
  */
 
-SendStream.prototype.notModified = function(){
+SendStream.prototype.notModified = function() {
   var res = this.res;
   debug('not modified');
   this.removeContentHeaderFields();
@@ -309,7 +293,7 @@ SendStream.prototype.notModified = function(){
  * @api private
  */
 
-SendStream.prototype.headersAlreadySent = function headersAlreadySent(){
+SendStream.prototype.headersAlreadySent = function headersAlreadySent() {
   var err = new Error('Can\'t set headers after they are sent.');
   debug('headers already sent');
   this.error(500, err);
@@ -323,7 +307,7 @@ SendStream.prototype.headersAlreadySent = function headersAlreadySent(){
  * @api private
  */
 
-SendStream.prototype.isCachable = function(){
+SendStream.prototype.isCachable = function() {
   var res = this.res;
   return (res.statusCode >= 200 && res.statusCode < 300) || 304 == res.statusCode;
 };
@@ -335,7 +319,7 @@ SendStream.prototype.isCachable = function(){
  * @api private
  */
 
-SendStream.prototype.onStatError = function(err){
+SendStream.prototype.onStatError = function(err) {
   var notfound = ['ENOENT', 'ENAMETOOLONG', 'ENOTDIR'];
   if (~notfound.indexOf(err.code)) return this.error(404, err);
   this.error(500, err);
@@ -348,26 +332,11 @@ SendStream.prototype.onStatError = function(err){
  * @api private
  */
 
-SendStream.prototype.isFresh = function(){
+SendStream.prototype.isFresh = function() {
   return fresh(this.req.headers, this.res._headers);
 };
 
-/**
- * Check if the range is fresh.
- *
- * @return {Boolean}
- * @api private
- */
 
-SendStream.prototype.isRangeFresh = function isRangeFresh(){
-  var ifRange = this.req.headers['if-range'];
-
-  if (!ifRange) return true;
-
-  return ~ifRange.indexOf('"')
-    ? ~ifRange.indexOf(this.res._headers['etag'])
-    : Date.parse(this.res._headers['last-modified']) <= Date.parse(ifRange);
-};
 
 /**
  * Redirect to `path`.
@@ -376,12 +345,15 @@ SendStream.prototype.isRangeFresh = function isRangeFresh(){
  * @api private
  */
 
-SendStream.prototype.redirect = function(path){
+SendStream.prototype.redirect = function(path) {
+
   if (listenerCount(this, 'directory') !== 0) {
     return this.emit('directory');
   }
 
-  if (this.hasTrailingSlash()) return this.error(403);
+  if (this.hasTrailingSlash()) {
+    return this.error(403);
+  }
   var res = this.res;
   path += '/';
   res.statusCode = 301;
@@ -398,10 +370,10 @@ SendStream.prototype.redirect = function(path){
  * @api public
  */
 
-SendStream.prototype.pipe = function(res){
-  var self = this
-    , args = arguments
-    , root = this._root;
+SendStream.prototype.pipe = function(res) {
+  var self = this,
+    args = arguments,
+    root = this._root;
 
   // references
   this.res = res;
@@ -447,9 +419,7 @@ SendStream.prototype.pipe = function(res){
 
     // legacy support
     if (access === undefined) {
-      access = parts[parts.length - 1][0] === '.'
-        ? (this._hidden ? 'allow' : 'ignore')
-        : 'allow'
+      access = parts[parts.length - 1][0] === '.' ? (this._hidden ? 'allow' : 'ignore') : 'allow'
     }
 
     debug('%s dotfile "%s"', access, path)
@@ -463,13 +433,14 @@ SendStream.prototype.pipe = function(res){
         return this.error(404)
     }
   }
-
-  // index file support
-  if (this._index.length && this.path[this.path.length - 1] === '/') {
-    this.sendIndex(path);
-    return res;
-  }
-
+  /*
+    // index file support
+    if (this._index.length && this.path[this.path.length - 1] === '/') {
+      console.log("send index");
+      this.sendIndex(path);
+      return res;
+    }
+  */
   this.sendFile(path);
   return res;
 };
@@ -481,7 +452,8 @@ SendStream.prototype.pipe = function(res){
  * @api public
  */
 
-SendStream.prototype.send = function(path, stat){
+SendStream.prototype.send = function(path, inzip, stat) {
+  // console.trace();
   var options = this.options;
   var len = stat.size;
   var res = this.res;
@@ -496,70 +468,10 @@ SendStream.prototype.send = function(path, stat){
 
   debug('pipe "%s"', path)
 
-  // set header fields
-  this.setHeader(path, stat);
-
-  // set content-type
-  this.type(path);
-
-  // conditional GET support
-  if (this.isConditionalGET()
-    && this.isCachable()
-    && this.isFresh()) {
-    return this.notModified();
-  }
-
-  // adjust len to start/end options
-  len = Math.max(0, len - offset);
-  if (options.end !== undefined) {
-    var bytes = options.end - offset + 1;
-    if (len > bytes) len = bytes;
-  }
-
-  // Range support
-  if (ranges) {
-    ranges = parseRange(len, ranges);
-
-    // If-Range support
-    if (!this.isRangeFresh()) {
-      debug('range stale');
-      ranges = -2;
-    }
-
-    // unsatisfiable
-    if (-1 == ranges) {
-      debug('range unsatisfiable');
-      res.setHeader('Content-Range', 'bytes */' + stat.size);
-      return this.error(416);
-    }
-
-    // valid (syntactically invalid/multiple ranges are treated as a regular response)
-    if (-2 != ranges && ranges.length === 1) {
-      debug('range %j', ranges);
-
-      options.start = offset + ranges[0].start;
-      options.end = offset + ranges[0].end;
-
-      // Content-Range
-      res.statusCode = 206;
-      res.setHeader('Content-Range', 'bytes '
-        + ranges[0].start
-        + '-'
-        + ranges[0].end
-        + '/'
-        + len);
-      len = options.end - options.start + 1;
-    }
-  }
-
-  // content-length
-  res.setHeader('Content-Length', len);
-
-  // HEAD support
-  if ('HEAD' == req.method) return res.end();
-
-  this.stream(path, options);
+  this.stream(req, res, path, inzip, options, stat);
 };
+
+
 
 /**
  * Transfer file for `path`.
@@ -571,35 +483,36 @@ SendStream.prototype.sendFile = function sendFile(path) {
   var i = 0
   var self = this
 
+  //console.log("send file", path);
   debug('stat "%s"', path);
-  fs.stat(path, function onstat(err, stat) {
-    if (err && err.code === 'ENOENT'
-      && !extname(path)
-      && path[path.length - 1] !== sep) {
-      // not found, check extensions
-      return next(err)
-    }
-    if (err) return self.onStatError(err)
-    if (stat.isDirectory()) return self.redirect(self.path)
-    self.emit('file', path, stat)
-    self.send(path, stat)
+  findFile(path, function(err, path, inzip) {
+    fs.stat(path, function onstat(err, stat) {
+      if (err && err.code === 'ENOENT' && !extname(path) && path[path.length - 1] !== sep) {
+        // not found, check extensions
+        return next(err)
+      }
+      if (err) return self.onStatError(err)
+      if (stat.isDirectory()) {
+        return self.redirect(self.path)
+      }
+      self.emit('file', path, inzip, stat)
+      self.send(path, inzip, stat)
+    })
   })
 
   function next(err) {
     if (self._extensions.length <= i) {
-      return err
-        ? self.onStatError(err)
-        : self.error(404)
+      return err ? self.onStatError(err) : self.error(404)
     }
 
     var p = path + '.' + self._extensions[i++]
 
     debug('stat "%s"', p)
-    fs.stat(p, function (err, stat) {
+    fs.stat(p, function(err, stat) {
       if (err) return next(err)
       if (stat.isDirectory()) return next()
       self.emit('file', p, stat)
-      self.send(p, stat)
+      self.send(p, '', stat)
     })
   }
 }
@@ -610,11 +523,11 @@ SendStream.prototype.sendFile = function sendFile(path) {
  * @param {String} path
  * @api private
  */
-SendStream.prototype.sendIndex = function sendIndex(path){
+SendStream.prototype.sendIndex = function sendIndex(path) {
   var i = -1;
   var self = this;
 
-  function next(err){
+  function next(err) {
     if (++i >= self._index.length) {
       if (err) return self.onStatError(err);
       return self.error(404);
@@ -623,7 +536,7 @@ SendStream.prototype.sendIndex = function sendIndex(path){
     var p = join(path, self._index[i]);
 
     debug('stat "%s"', p);
-    fs.stat(p, function(err, stat){
+    fs.stat(p, function(err, stat) {
       if (err) return next(err);
       if (stat.isDirectory()) return next();
       self.emit('file', p, stat);
@@ -641,8 +554,9 @@ SendStream.prototype.sendIndex = function sendIndex(path){
  * @param {Object} options
  * @api private
  */
+var unzip = require('unzip');
 
-SendStream.prototype.stream = function(path, options){
+SendStream.prototype.stream = function(req, res, path, inzip, options, stat) {
   // TODO: this is all lame, refactor meeee
   var finished = false;
   var self = this;
@@ -650,33 +564,148 @@ SendStream.prototype.stream = function(path, options){
   var req = this.req;
 
   // pipe
-  var stream = fs.createReadStream(path, options);
-  this.emit('stream', stream);
-  stream.pipe(res);
+  var zipstream = fs.createReadStream(path, options);
+  var found = false;
+
+  var indexMatch = {};
+  var extensionMatch = {};
+  zipstream.pipe(unzip.Parse())
+    .on('entry', function(entry) {
+      if (found) {
+        entry.autodrain();
+        return;
+      }
+      //  console.log("etrye is" , entry);
+      var fileName = entry.path;
+      var type = entry.type; // 'Directory' or 'File'
+      var size = entry.size;
+
+      if (fileName === inzip && type != 'Directory') {
+        found = true;
+
+        entry.on('end', function onend() {
+          self.emit('end');
+        });
+
+        entry.on('error', function onerror(err) {
+          self.onStatError(err);
+        })
+
+        self.setHeader(path, inzip, stat);
+
+        // conditional GET support
+        if (self.isConditionalGET() && self.isCachable()) {
+          return self.notModified();
+        }
+
+        this.emit('stream', entry);
+
+        // set content-type
+        self.type(inzip);
+
+        // content-length
+        res.setHeader('Content-Length', entry.size);
+        // set header fields
+        //stat are form the zip file
+
+
+        // HEAD support
+        if ('HEAD' == req.method) return res.end();
+
+        entry.pipe(res);
+
+        // end
+
+      } else if (fileName.indexOf(inzip + '/') == 0) {
+        found = true;
+        self.redirect(self.path);
+        entry.autodrain();
+      } else {
+        var index = self._index.some(function(index) {
+          // console.log("searching index", fileName, inzip + '/' + index);
+          if (inzip === '/' && fileName === index) {
+            found = true;
+            self.stream(req, res, path, fileName, options, stat);
+            return true;
+          } else if (inzip != '/' && fileName === inzip + index) {
+            indexMatch[index] = fileName;
+            return false;
+          } else {
+            return false;
+          }
+        })
+
+        if (index || inzip.indexOf('.') > 0) return;
+
+        var withExtension = self._extensions.some(function(ext) {
+          // console.log("trying ext ", ext, fileName, inzip + '.' + ext);
+          if (fileName === inzip + '.' + ext) {
+            found = false;
+            //maybe other file with a best extension will come, we should save the match and check later
+            extensionMatch[ext] = fileName;
+            return true;
+          } else {
+            return false;
+          }
+
+        });
+
+        if (!withExtension) {
+          entry.autodrain();
+        };
+
+      }
+
+    }).on('close', function() {
+      if (!found) {
+        if (inzip[inzip.length - 1] == '/' && self._index.length == 0) {
+          self.error(403);
+        } else if (Object.keys(indexMatch).length > 0) {
+          //we should get the best index
+          self._index.some(function(index) {
+            if (indexMatch[index] !== undefined) {
+              self.stream(req, res, path, indexMatch[index], options, stat);
+              return true;
+            }
+            return false;
+          });
+
+        } else if (Object.keys(extensionMatch).length > 0) {
+          //we should get the best _extensions
+          self._extensions.some(function(ext) {
+            if (extensionMatch[ext] !== undefined) {
+              self.stream(req, res, path, extensionMatch[ext], options, stat);
+              return true;
+            }
+            return false;
+          })
+        } else {
+          self.error(404);
+        }
+      }
+    });
 
   // response finished, done with the fd
-  onFinished(res, function onfinished(){
+  onFinished(res, function onfinished() {
     finished = true;
-    destroy(stream);
+    destroy(zipstream);
   });
 
   // error handling code-smell
-  stream.on('error', function onerror(err){
+  zipstream.on('error', function onerror(err) {
     // request already finished
     if (finished) return;
 
     // clean up stream
     finished = true;
-    destroy(stream);
+    destroy(zipstream);
 
     // error
     self.onStatError(err);
   });
 
-  // end
-  stream.on('end', function onend(){
-    self.emit('end');
-  });
+
+
 };
 
 /**
@@ -687,7 +716,7 @@ SendStream.prototype.stream = function(path, options){
  * @api private
  */
 
-SendStream.prototype.type = function(path){
+SendStream.prototype.type = function(path) {
   var res = this.res;
   if (res.getHeader('Content-Type')) return;
   var type = mime.lookup(path);
@@ -698,19 +727,17 @@ SendStream.prototype.type = function(path){
 
 /**
  * Set response header fields, most
- * fields may be pre-defined.
+ * fields may be pre-defined.path
  *
  * @param {String} path
  * @param {Object} stat
  * @api private
  */
 
-SendStream.prototype.setHeader = function setHeader(path, stat){
+SendStream.prototype.setHeader = function setHeader(path, inzip, stat) {
   var res = this.res;
+  this.emit('headers', res, join(path, inzip), stat);
 
-  this.emit('headers', res, path, stat);
-
-  if (!res.getHeader('Accept-Ranges')) res.setHeader('Accept-Ranges', 'bytes');
   if (!res.getHeader('Date')) res.setHeader('Date', new Date().toUTCString());
   if (!res.getHeader('Cache-Control')) res.setHeader('Cache-Control', 'public, max-age=' + Math.floor(this._maxage / 1000));
 
@@ -768,6 +795,30 @@ function decode(path) {
  * @api private
  */
 
-function normalizeList(val){
+function normalizeList(val) {
   return [].concat(val || [])
+}
+
+
+function findFile(path, cb) {
+
+  var findZipAndPath = function(path, inzip, cb) {
+    fs.stat(path, function onstat(err, stat) {
+      if (err && (err.code === 'ENOENT' || err.code === 'ENOTDIR')) {
+        //we shoudl go upper
+
+        return findZipAndPath(dirname(path), join(basename(path), inzip), cb);
+      } else {
+        //zip file exist
+        cb(null, path, inzip, stat);
+      }
+    });
+  };
+
+  if (path[path.length - 1] == '/') {
+    return findZipAndPath(path.substr(0, path.length - 1), '/', cb);
+  } else {
+    return findZipAndPath(path, '', cb);
+  }
+
 }
