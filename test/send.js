@@ -1257,6 +1257,37 @@ describe('send(file, options)', function(){
         })
       })
     })
+
+   describe('when given zipfs', function() {
+      it('should work on standard case', function(done) {
+        var app = http.createServer(function(req, res) {
+          send(req, req.url, {
+            fs: require('zipfs'),
+            root: fixtures
+          })
+          .pipe(res);
+        });
+ 
+        request(app)
+          .get('/pets/../name.txt')
+          .expect(200, 'tobi', done)
+      })
+ 
+    var zipfixtures = path.join( __dirname, '..', 'node_modules' ,'zipfs', 'test', 'fixtures')
+      it('should work with file a zip', function(done) {
+        var app = http.createServer(function(req, res) {
+          send(req, req.url, {
+            fs: require('zipfs'),
+            root: zipfixtures 
+          })
+          .pipe(res);
+        });
+ 
+        request(app)
+          .get('/fixtures.zip/name.html')
+          .expect(200, '<p>tobi</p>', done)
+      })
+    })
   })
 })
 
