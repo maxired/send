@@ -471,6 +471,11 @@ SendStream.prototype.pipe = function(res){
     return res;
   }
 
+  if(path.length < root.length){
+     this.redirect('/');
+     return;
+  }
+
   this.sendFile(path);
   return res;
 };
